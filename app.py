@@ -32,7 +32,7 @@ if tracker_type == "Politicians":
     if st.button("Fetch Trades") and RAPIDAPI_KEY:
         headers = {
             "X-RapidAPI-Key": RAPIDAPI_KEY,
-            ...
+            
         }
     if st.button("Fetch Trades") and rapidapi_key:
         try:
