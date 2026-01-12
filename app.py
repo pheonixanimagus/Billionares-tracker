@@ -13,10 +13,15 @@ You need free API keys:
 
 Enter your API keys below.
 """)
+# Load secrets securely (will work locally with secrets.toml and on Cloud)
+RAPIDAPI_KEY = st.secrets.get("RAPIDAPI_KEY", None)
+SEC_API_KEY = st.secrets.get("SEC_API_KEY", None)
 
-# Input for API keys
-rapidapi_key = st.text_input("RapidAPI Key (for Politicians)", type="password")
-sec_api_key = st.text_input("SEC-API Key (for Hedge Funds & Billionaires)", type="password")
+# Optional: Show a nice message if keys are missing
+if not RAPIDAPI_KEY:
+    st.warning("RapidAPI Key is missing. Add it in Streamlit Cloud secrets (or local .streamlit/secrets.toml for testing).")
+if not SEC_API_KEY:
+    st.warning("SEC-API Key is missing. Add it in Streamlit Cloud secrets.")
 
 # Select tracker type
 tracker_type = st.selectbox("Select what to track:", ["Politicians", "Billionaires (Insider Trades)", "Hedge Funds (13F Filings)"])
@@ -24,6 +29,11 @@ tracker_type = st.selectbox("Select what to track:", ["Politicians", "Billionair
 if tracker_type == "Politicians":
     st.subheader("Track Politician Investments")
     politician_name = st.text_input("Enter Politician Name (e.g., Marjorie Taylor Greene):")
+    if st.button("Fetch Trades") and RAPIDAPI_KEY:
+    headers = {
+        "X-RapidAPI-Key": RAPIDAPI_KEY,
+        ...
+    }
     if st.button("Fetch Trades") and rapidapi_key:
         try:
             headers = {
@@ -51,6 +61,9 @@ elif tracker_type == "Billionaires (Insider Trades)":
     st.subheader("Track Billionaire Insider Trades")
     st.markdown("Enter a company trading symbol associated with the billionaire (e.g., TSLA for Elon Musk).")
     symbol = st.text_input("Enter Company Symbol (e.g., TSLA):")
+    if st.button("Fetch Insider Trades") and SEC_API_KEY:
+    insider_api = InsiderTradingApi(api_key=SEC_API_KEY)
+    ...
     if st.button("Fetch Insider Trades") and sec_api_key:
         try:
             insider_api = InsiderTradingApi(api_key=sec_api_key)
@@ -76,6 +89,9 @@ elif tracker_type == "Hedge Funds (13F Filings)":
     """)
     cik = st.text_input("Enter Hedge Fund CIK (e.g., 0001350694 for Bridgewater):")
     period = st.text_input("Enter Period of Report (e.g., 2024-03-31):")
+    if st.button("Fetch 13F Holdings") and SEC_API_KEY:
+    form13f_api = Form13FHoldingsApi(api_key=SEC_API_KEY)
+    ...
     if st.button("Fetch 13F Holdings") and sec_api_key:
         try:
             form13f_api = Form13FHoldingsApi(api_key=sec_api_key)
