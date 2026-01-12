@@ -109,23 +109,23 @@ elif tracker_type == "Hedge Funds (13F Filings)":
     st.markdown("""
     Enter the **CIK** (SEC Central Index Key) of the fund.  
     Examples:  
-    - Berkshire Hathaway: 0001067983  
-    - Bridgewater Associates: 0001350694  
-    - BlackRock: 0001364742  
-    Find more CIKs: https://www.sec.gov/edgar/search/
+    - Berkshire Hathaway (Warren Buffett): **0001067983**  
+    - Bridgewater Associates: **0001350694**  
+    - BlackRock: **0001364742**  
+    Find more: https://www.sec.gov/edgar/search/
     """)
 
-    cik = st.text_input("Hedge Fund CIK", placeholder="0001067983").strip()
+    cik = st.text_input("Hedge Fund CIK", placeholder="0001067983").strip().lstrip('0')  # remove leading zeros if user adds them
     period = st.text_input("Period of Report (YYYY-MM-DD)", placeholder="2025-09-30").strip()
 
     if st.button("Fetch 13F Holdings") and cik and period:
-        with st.spinner("Fetching 13F holdings..."):
+        with st.spinner("Fetching 13F holdings (max 50 per call)..."):
             try:
                 form13f_api = Form13FHoldingsApi(api_key=SEC_API_KEY)
                 query = {
-                    "query": f"cik:{cik} AND periodOfReport:{period}",
+                    "query": f"cik:{cik} AND periodOfReport:\"{period}\"",  # quotes around date for exact match
                     "from": "0",
-                    "size": "200",  # Free tier should allow this
+                    "size": "50",  # ← FIXED: Maximum allowed value
                     "sort": [{"filedAt": {"order": "desc"}}]
                 }
                 response = form13f_api.get_data(query)
@@ -133,12 +133,20 @@ elif tracker_type == "Hedge Funds (13F Filings)":
 
                 if holdings:
                     df = pd.DataFrame(holdings)
-                    st.dataframe(df, use_container_width=True)
+                    # Show useful columns if available
+                    useful_cols = ['nameOfIssuer', 'titleOfClass', 'cusip', 'value', 'shrsOrPrnAmt', 'investmentDiscretion']
+                    avail_cols = [c for c in useful_cols if c in df.columns]
+                    if avail_cols:
+                        st.dataframe(df[avail_cols].sort_values('value', ascending=False), use_container_width=True)
+                    else:
+                        st.dataframe(df, use_container_width=True)
+                    st.success(f"Showing up to 50 holdings for period {period}")
                 else:
-                    st.info(f"No 13F holdings found for CIK {cik} in period {period}")
+                    st.info(f"No 13F holdings found for CIK {cik} in period {period}. Try a recent quarter like 2025-09-30 or 2025-06-30.")
             except Exception as e:
                 st.error(f"Error: {str(e)}")
-
+                if "size" in str(e):
+                    st.warning("Note: max 'size' is 50 per request on this API.")
 # ────────────────────────────────────────────────
 # Footer / Notes
 # ────────────────────────────────────────────────
