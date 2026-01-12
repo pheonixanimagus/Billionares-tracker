@@ -107,49 +107,56 @@ elif tracker_type == "Billionaires (Insider Trades)":
 elif tracker_type == "Hedge Funds (13F Filings)":
     st.subheader("Hedge Fund 13F Holdings")
     st.markdown("""
-    CIK examples:  
-    - **0001067983** (Berkshire Hathaway – expect ~41 holdings)  
-    - **0001350694** (Bridgewater)  
-    Period examples: **2025-09-30** (latest for Berkshire)
+    CIK examples (include leading zeros if needed):  
+    - **0001067983** (Berkshire Hathaway – should show ~41 holdings for Q3 2025)  
+    - **0001350694** (Bridgewater – hundreds of holdings)  
+    Latest period for Berkshire: **2025-09-30** (filed Nov 14, 2025)
     """)
 
-    cik = st.text_input("Hedge Fund CIK", value="0001067983").strip().lstrip('0')
+    cik = st.text_input("Hedge Fund CIK", value="0001067983").strip()
     period = st.text_input("Period of Report (YYYY-MM-DD)", value="2025-09-30").strip()
 
     if st.button("Fetch 13F Holdings") and cik and period:
-        with st.spinner("Fetching... (max 50 per call)"):
+        with st.spinner("Fetching holdings..."):
             try:
                 form13f_api = Form13FHoldingsApi(api_key=SEC_API_KEY)
                 query = {
                     "query": f"cik:{cik} AND periodOfReport:\"{period}\"",
                     "from": "0",
-                    "size": "50",
+                    "size": "50",  # Max allowed
                     "sort": [{"filedAt": {"order": "desc"}}]
                 }
                 response = form13f_api.get_data(query)
+                
+                # Debug: Show raw info
+                st.caption(f"Raw API response: {len(response.get('data', []))} items found")
+                if 'data' in response and response['data']:
+                    st.caption(f"First item sample: {response['data'][0]}")
+                
                 holdings = response.get("data", [])
 
                 if holdings:
                     df = pd.DataFrame(holdings)
-                    # Sort by value descending (if 'value' column exists)
                     if 'value' in df.columns:
                         df['value'] = pd.to_numeric(df['value'], errors='coerce')
                         df = df.sort_values('value', ascending=False)
                     
-                    # Show key columns
-                    key_cols = ['nameOfIssuer', 'titleOfClass', 'value', 'shrsOrPrnAmt', 'investmentDiscretion']
+                    key_cols = ['nameOfIssuer', 'titleOfClass', 'value', 'shrsOrPrnAmt', 'investmentDiscretion', 'cusip']
                     avail_cols = [c for c in key_cols if c in df.columns]
+                    if len(df) < 5 and len(holdings) > 0:
+                        st.warning("API returned few rows — showing full raw data below for debug:")
+                        st.json(holdings)  # Show raw list
+                    
                     if avail_cols:
-                        st.dataframe(df[avail_cols], use_container_width=True)
+                        st.dataframe(df[avail_cols], use_container_width=True, hide_index=True)
                     else:
                         st.dataframe(df, use_container_width=True)
                     
-                    st.success(f"Found **{len(holdings)}** holdings for period {period} (total expected: ~41 for Berkshire)")
-                    st.caption("Note: Berkshire has only 41 stocks total in Q3 2025 – that's normal!")
+                    st.success(f"Displayed {len(df)} holdings (official: 41 for Berkshire Q3 2025)")
                 else:
-                    st.info("No holdings returned. Try adjusting period or check API key.")
+                    st.info("No holdings data returned. Check API key, period, or try another CIK.")
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"API Error: {str(e)}")
 # ────────────────────────────────────────────────
 # Footer / Notes
 # ────────────────────────────────────────────────
