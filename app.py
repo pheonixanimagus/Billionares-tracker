@@ -62,18 +62,16 @@ if ticker:
     col3, col4 = st.columns(2)
     with col3:
         st.link_button(
+            "🔍 View on Quiver Quant (Insiders)",
+            url=f"https://www.quiverquant.com/stock/{ticker}/insiders/",
+            use_container_width=True,
+            type="primary"
+        )
+    with col4:
+        st.link_button(
             "🔍 View on InsiderScreener",
             url=f"https://www.insiderscreener.com/en/company/{ticker}",
             use_container_width=True
-        )
-    with col4:
-        # Replace the Quiver insider button with this
-st.link_button(
-    "🔍 View Insider Trades (InsiderScreener – Recommended)",
-    url=f"https://www.insiderscreener.com/en/company/{ticker}",
-    use_container_width=True,
-    type="primary"  # Makes it stand out
-)
         )
 else:
     st.caption("Enter a ticker above to activate the buttons")
@@ -123,7 +121,8 @@ st.markdown("---")
 st.subheader("More Free Resources")
 st.markdown("""
 - Official SEC EDGAR (raw filings): [https://www.sec.gov/edgar/search](https://www.sec.gov/edgar/search)  
-- Unusual Whales Politics: [https://unusualwhales.com/politics](https://unusualwhales.com/politics)
+- Unusual Whales Politics: [https://unusualwhales.com/politics](https://unusualwhales.com/politics)  
+- OpenInsider (alternative for insiders): [http://openinsider.com](http://openinsider.com)
 """)
 
 st.caption("Simple, reliable tracking — no more API headaches! 🚀")
