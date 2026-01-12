@@ -67,10 +67,13 @@ if ticker:
             use_container_width=True
         )
     with col4:
-        st.link_button(
-            "🔍 View on Quiver Quant Insiders",
-            url=f"https://www.quiverquant.com/insiders/search?ticker={ticker}",
-            use_container_width=True
+        # Replace the Quiver insider button with this
+st.link_button(
+    "🔍 View Insider Trades (InsiderScreener – Recommended)",
+    url=f"https://www.insiderscreener.com/en/company/{ticker}",
+    use_container_width=True,
+    type="primary"  # Makes it stand out
+)
         )
 else:
     st.caption("Enter a ticker above to activate the buttons")
